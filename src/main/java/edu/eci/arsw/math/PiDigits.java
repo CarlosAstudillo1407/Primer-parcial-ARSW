@@ -110,4 +110,34 @@ public class PiDigits {
         return result;
     }
 
+    public static byte[] getDigits(int start, int count, int numThreads) {
+        if (start < 0 || count < 0 || numThreads <= 0) {
+            throw new IllegalArgumentException("Invalid parameters");
+        }
+
+        byte[] digits = new byte[count];
+        int chunkSize = count / numThreads;
+        int remainder = count % numThreads;
+
+        PiDigitThread[] threads = new PiDigitThread[numThreads];
+        int offset = 0;
+
+        for (int i = 0; i < numThreads; i++) {
+            int currentChunk = chunkSize + (i < remainder ? 1 : 0);
+            threads[i] = new PiDigitThread(start + offset, currentChunk, digits, offset);
+            offset += currentChunk;
+            threads[i].start();
+        }
+
+        for (PiDigitThread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return digits;
+    }
+
 }
